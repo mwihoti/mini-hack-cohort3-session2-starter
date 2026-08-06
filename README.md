@@ -55,22 +55,33 @@ carries more kinds of content.
 
 ## Model provider
 
-Claude is the **active default** — that's what runs out of the box. You
-are not locked into it. `chat.js` includes three additional, fully
-written, ready-to-run blocks, commented out directly in the file:
+`chat.js` doesn't hardcode which LLM it talks to — `model-provider.js`
+picks the provider at runtime from `MODEL_PROVIDER` in your `.env` file,
+defaulting to `anthropic` if you leave that out entirely. Switching
+providers is a one-line edit to `.env`, not a code change:
+
+```
+MODEL_PROVIDER=anthropic   # or openai, gemini, ollama
+```
 
 | Provider | What you need | Runs where |
 |---|---|---|
-| **Claude (active)** | `ANTHROPIC_API_KEY` from console.anthropic.com | Anthropic's servers |
+| Anthropic (default) | `ANTHROPIC_API_KEY` from console.anthropic.com | Anthropic's servers |
 | OpenAI (GPT) | `npm install openai` + `OPENAI_API_KEY` | OpenAI's servers |
 | Google Gemini | `npm install @google/genai` + `GEMINI_API_KEY` | Google's servers |
 | Ollama (local) | Install Ollama, `ollama pull llama3.1` | Your own machine, no API key |
 
-To switch: comment out the active Anthropic block in `chat.js`, uncomment
-the provider you want, install its SDK if it needs one, and add its key
-to `.env`. Everything else in the file — the loop, the memory array, the
-system prompt — stays exactly the same, and so does everything you add
-tonight, because tool use isn't specific to one provider either.
+Fill in the key(s) for whichever provider(s) you want in `.env` — see
+`.env.example` for the exact variable names. You can also override the
+provider for a single run without touching `.env`:
+`MODEL_PROVIDER=openai npm start`, or force it in code with
+`createModelClient("openai")`.
+
+**Tool calling is only implemented for one provider right now** — the
+other three accept a `tools` argument but ignore it and never return tool
+calls. See the comments at the top of `model-provider.js` for which
+provider that is and why; if your agent needs tools, build it on that one
+until the others catch up.
 
 ## Setup
 
@@ -95,9 +106,10 @@ Type a message and press enter. To end the session, type `exit`.
 
 | File | Purpose |
 |---|---|
-| `chat.js` | Your Session 1 chatbot — client setup, system prompt, conversation loop. Claude active by default, OpenAI/Gemini/Ollama included commented out. This is what you extend tonight |
+| `chat.js` | Your Session 1 chatbot — client setup, system prompt, conversation loop. This is what you extend tonight |
+| `model-provider.js` | The provider factory — picks anthropic/openai/gemini/ollama based on `MODEL_PROVIDER` in `.env` |
 | `.env.example` | Template for your API key(s) — copy to `.env`, never commit `.env` |
-| `package.json` | Dependencies for the active provider: `@anthropic-ai/sdk`, `dotenv` |
+| `package.json` | Dependencies for all four providers' SDKs plus `dotenv`; Ollama needs no extra package |
 | `COMMANDS.md` | Every command you need, copy-paste ready, from clone to PR |
 | `CONTRIBUTING.md` | The full submission flow — branching, testing, screenshots, the X post, and the PR |
 | `docs/PULL_REQUEST_TEMPLATE.md` | What your PR description needs to cover |
