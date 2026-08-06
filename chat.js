@@ -11,8 +11,11 @@ async function main() {
   const rl = readline.createInterface({ input, output });
   const messages = [];
 
-  // configure the provider you have api keys for
-  const client = await createModelClient("openai"); // or "gemini" or "ollama"
+  // Provider is read from MODEL_PROVIDER in .env, defaulting to "anthropic"
+  // if that's not set. Override for a single run without touching .env:
+  //   MODEL_PROVIDER=openai npm start
+  // Or force it in code instead: createModelClient("openai")
+  const client = await createModelClient();
   console.log(
     `Mini Hack CLI Chatbot using ${client.provider} — type 'exit' to quit\n`,
   );
@@ -28,9 +31,9 @@ async function main() {
       systemPrompt: SYSTEM_PROMPT,
       messages,
     });
-    console.log(`\nAssistant: ${reply}\n`);
+    console.log(`\nAssistant: ${reply.text}\n`);
 
-    messages.push({ role: "assistant", content: reply });
+    messages.push({ role: "assistant", content: reply.text });
   }
 
   rl.close();
