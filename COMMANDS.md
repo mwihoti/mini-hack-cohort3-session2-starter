@@ -24,10 +24,10 @@ git push origin week-1-<your-github-handle>
 ## Open your PR
 ```bash
 gh pr create --title "[Cohort 3 · Week 1] <Your Name> — CLI Agent" \
-  --body-file .github/PULL_REQUEST_TEMPLATE/week1.md
+  --body-file docs/PULL_REQUEST_TEMPLATE.md
 ```
 Or open the PR from GitHub's web UI against your fork's `main` branch.
-Post the PR link in Discord `#submissions` before Sunday midnight EAT.
+Post the PR link in the WhatsApp community before Sunday midnight EAT.
 
 ## After your PR is open
 
