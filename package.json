@@ -1,0 +1,14 @@
+{
+  "name": "mini-hack-cohort3-session2-starter",
+  "version": "1.0.0",
+  "description": "Cohort 3 Week 1 starter: CLI chatbot using the Claude API with conversation memory",
+  "type": "module",
+  "main": "chat.js",
+  "scripts": {
+    "start": "node chat.js"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.32.0",
+    "dotenv": "^16.4.5"
+  }
+}
