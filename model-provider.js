@@ -1,3 +1,33 @@
+// model-provider.js
+//
+// One factory, one interface, four providers. createModelClient() gives you
+// back { provider, generateText }. Every provider implements the same
+// shape so chat.js — and anything you build on top of it — never needs to
+// know which model is actually running underneath.
+//
+// Provider selection: pass a name explicitly — createModelClient("openai")
+// — or leave it blank and it reads MODEL_PROVIDER from .env, falling back
+// to "anthropic" if that's not set either.
+//
+// generateText({ systemPrompt, messages, tools }) always returns:
+//   { text, toolCalls, stopReason, raw }
+//
+//   text       — the assistant's reply text ("" if it only called tools)
+//   toolCalls  — [{ id, name, input }], normalized regardless of provider.
+//                Empty array if the model didn't call a tool, OR if this
+//                provider doesn't support tool calling yet (see below).
+//   stopReason — the provider's own reason string, kept as-is, not normalized
+//   raw        — the full untouched response, in case you need provider-specific detail
+//
+// TOOL-CALLING SUPPORT
+// Only the client marked as the primary teaching provider below implements
+// tools. The other three accept a `tools` argument without erroring, but
+// ignore it and always return toolCalls: []. Each provider's function-
+// calling API shape is different enough that fully normalizing all four
+// is real work, not a quick add. If your Week 1 agent needs tools — and
+// it does, that's the deliverable — build it on the primary provider
+// until the others catch up.
+
 const SUPPORTED_PROVIDERS = ["anthropic", "openai", "gemini", "ollama"];
 
 function getConfiguredProvider() {
@@ -13,6 +43,8 @@ function getConfiguredProvider() {
   return provider;
 }
 
+// Generic text extraction for providers that don't (yet) return structured
+// tool calls — tries the common shapes a chat-completion response takes.
 function extractText(value) {
   if (typeof value === "string") return value;
   if (Array.isArray(value)) {
@@ -65,15 +97,28 @@ async function createAnthropicClient() {
 
   return {
     provider: "anthropic",
-    async generateText({ systemPrompt, messages }) {
+    async generateText({ systemPrompt, messages, tools }) {
       const response = await client.messages.create({
         model: process.env.ANTHROPIC_MODEL || "claude-sonnet-4-6",
         max_tokens: Number(process.env.MAX_TOKENS || 1024),
         system: systemPrompt,
+        tools: tools ?? undefined,
         messages,
       });
 
-      return normalizeResponse(response);
+      // Precise extraction, not the generic guesser below — we know this
+      // shape exactly, and tool_use blocks need to survive the round trip.
+      const textBlock = response.content.find((b) => b.type === "text");
+      const toolCalls = response.content
+        .filter((b) => b.type === "tool_use")
+        .map((b) => ({ id: b.id, name: b.name, input: b.input }));
+
+      return {
+        text: textBlock ? textBlock.text : "",
+        toolCalls,
+        stopReason: response.stop_reason,
+        raw: response,
+      };
     },
   };
 }
@@ -90,13 +135,20 @@ async function createOpenAIClient() {
   return {
     provider: "openai",
     async generateText({ systemPrompt, messages }) {
+      // Tool calling not yet implemented for this provider — see the note
+      // at the top of this file. Plain text chat only, for now.
       const response = await client.chat.completions.create({
         model: process.env.OPENAI_MODEL || "gpt-4.1",
         max_tokens: Number(process.env.MAX_TOKENS || 1024),
         messages: [{ role: "system", content: systemPrompt }, ...messages],
       });
 
-      return normalizeResponse(response);
+      return {
+        text: normalizeResponse(response),
+        toolCalls: [],
+        stopReason: response.choices?.[0]?.finish_reason ?? "unknown",
+        raw: response,
+      };
     },
   };
 }
@@ -113,6 +165,8 @@ async function createGeminiClient() {
   return {
     provider: "gemini",
     async generateText({ systemPrompt, messages }) {
+      // Tool calling not yet implemented for this provider — see the note
+      // at the top of this file. Plain text chat only, for now.
       const response = await client.models.generateContent({
         model: process.env.GEMINI_MODEL || "gemini-2.5-flash",
         config: { systemInstruction: systemPrompt },
@@ -122,7 +176,12 @@ async function createGeminiClient() {
         })),
       });
 
-      return normalizeResponse(response);
+      return {
+        text: normalizeResponse(response),
+        toolCalls: [],
+        stopReason: response.candidates?.[0]?.finishReason ?? "unknown",
+        raw: response,
+      };
     },
   };
 }
@@ -134,6 +193,8 @@ async function createOllamaClient() {
   return {
     provider: "ollama",
     async generateText({ systemPrompt, messages }) {
+      // Tool calling not yet implemented for this provider — see the note
+      // at the top of this file. Plain text chat only, for now.
       const response = await fetch(`${baseUrl}/api/chat`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -145,11 +206,18 @@ async function createOllamaClient() {
       });
 
       if (!response.ok) {
-        throw new Error(`Ollama request failed with status ${response.status}`);
+        throw new Error(
+          `Ollama request failed with status ${response.status} — is "ollama serve" running, and have you run "ollama pull ${model}"?`,
+        );
       }
 
       const data = await response.json();
-      return normalizeResponse(data);
+      return {
+        text: normalizeResponse(data),
+        toolCalls: [],
+        stopReason: data.done_reason ?? "unknown",
+        raw: data,
+      };
     },
   };
 }
