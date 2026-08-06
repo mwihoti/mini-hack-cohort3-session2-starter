@@ -99,7 +99,7 @@ Type a message and press enter. To end the session, type `exit`.
 | `.env.example` | Template for your API key(s) — copy to `.env`, never commit `.env` |
 | `package.json` | Dependencies for the active provider: `@anthropic-ai/sdk`, `dotenv` |
 | `COMMANDS.md` | Every command you need, copy-paste ready, from clone to PR |
-| `CONTRIBUTING_GUIDE.md` | The full submission flow — branching, testing, screenshots, the X post, and the PR |
+| `CONTRIBUTING.md` | The full submission flow — branching, testing, screenshots, the X post, and the PR |
 | `docs/PULL_REQUEST_TEMPLATE.md` | What your PR description needs to cover |
 
 ## Tonight: your Week 1 deliverable
@@ -107,7 +107,7 @@ Type a message and press enter. To end the session, type `exit`.
 Extend `chat.js` (or build alongside it) so your agent can call **two
 tools**: a web search tool, and the Avalanche MCP server (`docs_search`
 at minimum). We build both live, together, on top of this file. See
-`COMMANDS.md` for the exact commands and `CONTRIBUTING_GUIDE.md` for how
+`COMMANDS.md` for the exact commands and `CONTRIBUTING.md` for how
 to submit: testing, screenshots, the X post, and the PR are all covered
 there.
 
