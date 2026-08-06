@@ -16,12 +16,11 @@
 8. Post on X: a detailed post with both screenshots (working test + PR),
    tagging **@code_mwangi** and **@AvaxAfrica**. See the template below.
 9. Copy the link to your X post.
-10. Submit that link on the quest page (link going up in Discord `#announcements`
+10. Submit that link on the quest page (link going up in the WhatsApp community
     once it's live — hold onto your link until then).
 
-Discord `#submissions` still gets the PR link too, same as before — the X
-post is in addition to that, not instead of it. Also drop your X post link
-in the WhatsApp community so others can see it there too.
+Share both your PR link and your X post link in the WhatsApp community —
+the X post is in addition to the PR link, not instead of it.
 
 ## X post template
 
@@ -57,5 +56,5 @@ than a bare link, and it's a better record of your own progress too.
 
 ## Getting unblocked
 
-Post in Discord `#week-1-cohort3` first. Tag the Technical Lead only if
+Post in the WhatsApp community first. Tag the Technical Lead only if
 you've been stuck for more than 30 minutes.
