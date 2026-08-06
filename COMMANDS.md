@@ -34,4 +34,4 @@ Post the PR link in the WhatsApp community before Sunday midnight EAT.
 Screenshot your working test and your PR, post both on X tagging
 `@code_mwangi` and `@AvaxAfrica`, then copy your post link — the quest page
 (coming soon) is where that link goes. Full steps and a post template are in
-`CONTRIBUTING_GUIDE.md`.
+`CONTRIBUTING.md`.
