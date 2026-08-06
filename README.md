@@ -100,7 +100,7 @@ Type a message and press enter. To end the session, type `exit`.
 | `package.json` | Dependencies for the active provider: `@anthropic-ai/sdk`, `dotenv` |
 | `COMMANDS.md` | Every command you need, copy-paste ready, from clone to PR |
 | `CONTRIBUTING_GUIDE.md` | The full submission flow — branching, testing, screenshots, the X post, and the PR |
-| `.github/PULL_REQUEST_TEMPLATE/week1.md` | What your PR description needs to cover |
+| `docs/PULL_REQUEST_TEMPLATE.md` | What your PR description needs to cover |
 
 ## Tonight: your Week 1 deliverable
 
