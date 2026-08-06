@@ -11,6 +11,7 @@
    - PR title format: `[Cohort 3 · Week N] Your Name — Deliverable title`.
    - Fill in the PR template completely: what you built, what works, what
      doesn't, and your public URL or Fuji deployment link if relevant.
+     Reference copy: [`docs/PULL_REQUEST_TEMPLATE.md`](docs/PULL_REQUEST_TEMPLATE.md).
 7. Take a screenshot of the PR you just opened.
 8. Post on X: a detailed post with both screenshots (working test + PR),
    tagging **@code_mwangi** and **@AvaxAfrica**. See the template below.
@@ -19,7 +20,8 @@
     once it's live — hold onto your link until then).
 
 Discord `#submissions` still gets the PR link too, same as before — the X
-post is in addition to that, not instead of it.
+post is in addition to that, not instead of it. Also drop your X post link
+in the WhatsApp community so others can see it there too.
 
 ## X post template
 
