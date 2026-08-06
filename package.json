@@ -1,7 +1,7 @@
 {
   "name": "mini-hack-cohort3-session2-starter",
   "version": "1.0.0",
-  "description": "Cohort 3 Week 1 starter: CLI chatbot using the Claude API with conversation memory",
+  "description": "Cohort 3 Week 1 starter: CLI chatbot with pluggable LLM providers and conversation memory",
   "type": "module",
   "main": "chat.js",
   "scripts": {
