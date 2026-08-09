@@ -1,0 +1,18 @@
+[package]
+name = "mini-hack-chat"
+version = "1.0.0"
+edition = "2021"
+description = "Rust twin of chat.js — CLI chatbot with conversation memory"
+publish = false
+
+# Cargo normally expects src/main.rs; this points it at chat.rs, which sits
+# right here next to the manifest.
+[[bin]]
+name = "chat"
+path = "chat.rs"
+
+[dependencies]
+dotenvy = "0.15"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+ureq = { version = "2", features = ["json"] }

@@ -102,11 +102,36 @@ You:
 
 Type a message and press enter. To end the session, type `exit`.
 
+## Prefer Rust? Same starter, same lesson
+
+`rust/chat.rs` is the same Session 1 chatbot as `chat.js`, written in plain
+Rust with no SDK — it calls the Anthropic Messages API directly over HTTPS,
+so you can see that an "AI client" is just JSON over HTTP. Same system
+prompt, same grow-forever `messages` history, same loop, same `.env` (it
+reads the one at the repo root), and it honors the same `ANTHROPIC_MODEL`
+and `MAX_TOKENS` variables.
+
+```bash
+# needs a Rust toolchain — https://rustup.rs
+cd rust
+cargo run
+```
+
+It talks to Anthropic only — the `MODEL_PROVIDER` switch is a JS-side
+feature of `model-provider.js`. Tonight's tools slot into it the same way
+as in JS: check `stop_reason`, run the tool, push the result back into the
+history, call the API again. Full setup, the chat.js-to-chat.rs mapping,
+and Rust-specific troubleshooting live in
+[`rust/README.md`](rust/README.md).
+
 ## Files
 
 | File | Purpose |
 |---|---|
 | `chat.js` | Your Session 1 chatbot — client setup, system prompt, conversation loop. This is what you extend tonight |
+| `rust/chat.rs` | The same chatbot in plain Rust, no SDK — for builders who'd rather start in Rust. See "Prefer Rust?" above |
+| `rust/Cargo.toml` | Rust manifest — `cargo run` inside `rust/` builds and runs `chat.rs` |
+| `rust/README.md` | Setup, the chat.js↔chat.rs mapping, and troubleshooting for the Rust starter |
 | `model-provider.js` | The provider factory — picks anthropic/openai/gemini/ollama based on `MODEL_PROVIDER` in `.env` |
 | `.env.example` | Template for your API key(s) — copy to `.env`, never commit `.env` |
 | `package.json` | Dependencies for all four providers' SDKs plus `dotenv`; Ollama needs no extra package |
