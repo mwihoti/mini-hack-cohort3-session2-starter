@@ -2,11 +2,10 @@
 name = "mini-hack-chat"
 version = "1.0.0"
 edition = "2021"
-description = "Rust twin of chat.js — CLI chatbot with conversation memory"
+description = "Rust version of chat.js, a CLI chatbot with conversation memory"
 publish = false
 
-# Cargo normally expects src/main.rs; this points it at chat.rs, which sits
-# right here next to the manifest.
+# Cargo expects src/main.rs by default. This points it at chat.rs instead.
 [[bin]]
 name = "chat"
 path = "chat.rs"

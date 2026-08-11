@@ -1,21 +1,20 @@
-// chat.rs — the Rust twin of chat.js, for builders who'd rather onboard in Rust.
+// chat.rs, a Rust version of chat.js.
 //
-// Same program, same lesson: one client, one system prompt, one Vec holding
-// the whole conversation, one loop. There's no official Anthropic SDK for
-// Rust, and that's fine — the Messages API is just JSON over HTTPS, and
-// seeing it raw is worth more than an SDK would hide. Every request sends
-// the FULL history in `messages`; the model is stateless and re-reads the
-// whole transcript each turn. That's the entire memory trick.
+// Same program as the JS starter: one system prompt, one Vec holding the
+// whole conversation, one loop. There is no official Anthropic SDK for
+// Rust, so this calls the Messages API directly over HTTPS. Every request
+// sends the full history in `messages` because the model itself is
+// stateless. It just re-reads the whole transcript each turn.
 //
-// Run it:
+// To run:
 //   1. Install a toolchain from https://rustup.rs
-//   2. At the repo root: cp .env.example .env   (same ANTHROPIC_API_KEY as chat.js)
+//   2. At the repo root: cp .env.example .env  (same ANTHROPIC_API_KEY as chat.js)
 //   3. cd rust && cargo run
 //
-// This file talks to Anthropic only — the MODEL_PROVIDER switch lives on the
-// JS side in model-provider.js. Tonight's tool-calling work slots in where
-// `stop_reason` is read below: a "tool_use" stop means run the tool, push
-// the result back into `messages`, and call the API again.
+// This file talks to Anthropic only. The MODEL_PROVIDER switch is a JS-side
+// thing in model-provider.js. For the week 1 tools, start where stop_reason
+// is read below: a "tool_use" stop means run the tool, push the result back
+// into `messages` and call the API again.
 
 use serde::{Deserialize, Serialize};
 use serde_json::json;
@@ -28,15 +27,15 @@ const SYSTEM_PROMPT: &str = "You are Mini Hack Assistant, a patient technical me
 Team1 Kenya's Cohort 3 builders. Explain concepts in plain English before
 using jargon. Keep answers under 150 words unless asked for more detail.";
 
-// One turn of the conversation. The API accepts plain-string content, so the
-// starter keeps it that way; tool calls later need block arrays instead.
+// One turn of the conversation. Plain string content is enough for chat,
+// tool calls will need block arrays later.
 #[derive(Serialize)]
 struct Message {
     role: String, // "user" or "assistant"
     content: String,
 }
 
-// Just the response fields we need — serde ignores the rest.
+// Only the response fields we need, serde ignores the rest.
 #[derive(Deserialize)]
 struct ApiResponse {
     content: Vec<ContentBlock>,
@@ -46,7 +45,7 @@ struct ApiResponse {
 #[derive(Deserialize)]
 struct ContentBlock {
     #[serde(rename = "type")]
-    kind: String, // "text" for now; "tool_use" once you add tools
+    kind: String, // "text" for now, "tool_use" once you add tools
     #[serde(default)]
     text: String,
 }
@@ -70,14 +69,14 @@ fn main() {
 }
 
 fn run() -> Result<(), Box<dyn Error>> {
-    // Load .env into real environment variables; a missing file is fine.
-    // dotenvy walks up parent directories, so the repo-root .env is found
-    // even though this program runs from rust/.
+    // Load .env into real environment variables. A missing file is fine.
+    // dotenvy walks up parent directories, so it finds the .env at the
+    // repo root even though this runs from rust/.
     let _ = dotenvy::dotenv();
 
     let api_key =
         std::env::var("ANTHROPIC_API_KEY").map_err(|_| "ANTHROPIC_API_KEY is not set.")?;
-    // Same defaults as model-provider.js, so both starters behave alike.
+    // Same defaults as model-provider.js so both starters behave the same.
     let model =
         std::env::var("ANTHROPIC_MODEL").unwrap_or_else(|_| "claude-sonnet-4-6".to_string());
     let max_tokens: u32 = std::env::var("MAX_TOKENS")
@@ -87,10 +86,10 @@ fn run() -> Result<(), Box<dyn Error>> {
 
     let mut messages: Vec<Message> = Vec::new();
 
-    println!("Mini Hack CLI Chatbot (Rust) — type 'exit' to quit\n");
+    println!("Mini Hack CLI Chatbot (Rust) - type 'exit' to quit\n");
 
     loop {
-        // None means stdin closed (Ctrl-D) — treat it like "exit".
+        // None means stdin closed (Ctrl-D), treat it like "exit".
         let Some(user_input) = ask("You: ")? else {
             println!();
             break;
@@ -112,7 +111,7 @@ fn run() -> Result<(), Box<dyn Error>> {
         let text = reply.text();
         println!("\nAssistant: {text}\n");
         if reply.stop_reason.as_deref() == Some("max_tokens") {
-            eprintln!("(reply hit the token limit — raise MAX_TOKENS in .env)\n");
+            eprintln!("(reply hit the token limit, raise MAX_TOKENS in .env)\n");
         }
 
         messages.push(Message {
@@ -124,7 +123,7 @@ fn run() -> Result<(), Box<dyn Error>> {
     Ok(())
 }
 
-// Print a prompt, read one line. Ok(None) on end-of-input.
+// Print a prompt, read one line. Ok(None) on end of input.
 fn ask(prompt: &str) -> io::Result<Option<String>> {
     print!("{prompt}");
     io::stdout().flush()?;
@@ -135,7 +134,7 @@ fn ask(prompt: &str) -> io::Result<Option<String>> {
     Ok(Some(line.trim_end().to_string()))
 }
 
-// One API call: POST the system prompt plus the full history, parse the reply.
+// One API call. POST the system prompt plus the full history, parse the reply.
 fn send_message(
     api_key: &str,
     model: &str,
@@ -154,8 +153,9 @@ fn send_message(
 
     let response = match result {
         Ok(response) => response,
-        // Non-2xx: the API's own error body names the real problem (bad key,
-        // unknown model, rate limit) better than we could guess here.
+        // On non-2xx, return the API's own error body. It names the real
+        // problem (bad key, unknown model, rate limit) better than we
+        // could guess here.
         Err(ureq::Error::Status(code, response)) => {
             let body = response.into_string().unwrap_or_default();
             return Err(format!("API returned {code}: {body}").into());
