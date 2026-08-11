@@ -2,37 +2,38 @@
 //
 // One factory, one interface, four providers. createModelClient() gives you
 // back { provider, generateText }. Every provider implements the same
-// shape so chat.js — and anything you build on top of it — never needs to
+// shape so chat.js, and anything you build on top of it, never needs to
 // know which model is actually running underneath.
 //
-// Provider selection: pass a name explicitly — createModelClient("openai")
-// — or leave it blank and it reads MODEL_PROVIDER from .env, falling back
+// Provider selection: pass a name explicitly, createModelClient("openai")
+// or leave it blank and it reads MODEL_PROVIDER from .env, falling back
 // to "anthropic" if that's not set either.
 //
 // generateText({ systemPrompt, messages, tools }) always returns:
 //   { text, toolCalls, stopReason, raw }
 //
-//   text       — the assistant's reply text ("" if it only called tools)
-//   toolCalls  — [{ id, name, input }], normalized regardless of provider.
+//   text       : the assistant's reply text ("" if it only called tools)
+//   toolCalls  : [{ id, name, input }], normalized regardless of provider.
 //                Empty array if the model didn't call a tool, OR if this
 //                provider doesn't support tool calling yet (see below).
-//   stopReason — the provider's own reason string, kept as-is, not normalized
-//   raw        — the full untouched response, in case you need provider-specific detail
+//   stopReason : the provider's own reason string, kept as-is, not normalized
+//   raw        : the full untouched response, in case you need provider-specific detail
 //
 // TOOL-CALLING SUPPORT
 // Only the client marked as the primary teaching provider below implements
 // tools. The other three accept a `tools` argument without erroring, but
 // ignore it and always return toolCalls: []. Each provider's function-
 // calling API shape is different enough that fully normalizing all four
-// is real work, not a quick add. If your Week 1 agent needs tools — and
-// it does, that's the deliverable — build it on the primary provider
+// is real work, not a quick add. If your Week 1 agent needs tools (and
+// it does, that's the deliverable) build it on the primary provider
 // until the others catch up.
 
-const SUPPORTED_PROVIDERS = ["anthropic", "openai", "gemini", "ollama"];
+const SUPPORTED_PROVIDERS = ["openrouter", "anthropic", "openai", "gemini", "ollama"];
 
 function getConfiguredProvider() {
   const provider =
-    process.env.MODEL_PROVIDER?.trim().toLowerCase() || "anthropic";
+    process.env.MODEL_PROVIDER?.trim().toLowerCase()
+    || (process.env.OPENROUTER_API_KEY ? "openrouter" : "anthropic");
 
   if (!SUPPORTED_PROVIDERS.includes(provider)) {
     throw new Error(
@@ -44,7 +45,7 @@ function getConfiguredProvider() {
 }
 
 // Generic text extraction for providers that don't (yet) return structured
-// tool calls — tries the common shapes a chat-completion response takes.
+// tool calls, tries the common shapes a chat-completion response takes.
 function extractText(value) {
   if (typeof value === "string") return value;
   if (Array.isArray(value)) {
@@ -86,6 +87,56 @@ function normalizeResponse(response) {
   throw new Error("Unable to extract text from model response.");
 }
 
+async function createOpenRouterClient() {
+  const apiKey = process.env.OPENROUTER_API_KEY;
+  if (!apiKey) {
+    throw new Error("OPENROUTER_API_KEY is not set.");
+  }
+
+  const { default: OpenAI } = await import("openai");
+  const client = new OpenAI({
+    baseURL: "https://openrouter.ai/api/v1",
+    apiKey,
+    defaultHeaders: {
+      "HTTP-Referer": "https://github.com/mini-hack-cohort3",
+      "X-Title": "Mini Hack Assistant",
+    },
+  });
+
+  return {
+    provider: "openrouter",
+    async generateText({ systemPrompt, messages, tools }) {
+      const response = await client.chat.completions.create({
+        model: process.env.OPENROUTER_MODEL || "deepseek/deepseek-v4-flash",
+        max_tokens: Number(process.env.MAX_TOKENS || 1024),
+        messages: [{ role: "system", content: systemPrompt }, ...messages],
+        tools: tools?.map((tool) => ({
+          type: "function",
+          function: {
+            name: tool.name,
+            description: tool.description,
+            parameters: tool.input_schema,
+          },
+        })),
+      });
+
+      const message = response.choices?.[0]?.message ?? {};
+      const toolCalls = (message.tool_calls ?? []).map((call) => ({
+        id: call.id,
+        name: call.function.name,
+        input: JSON.parse(call.function.arguments || "{}"),
+      }));
+
+      return {
+        text: message.content ?? "",
+        toolCalls,
+        stopReason: response.choices?.[0]?.finish_reason ?? "unknown",
+        raw: response,
+      };
+    },
+  };
+}
+
 async function createAnthropicClient() {
   const apiKey = process.env.ANTHROPIC_API_KEY;
   if (!apiKey) {
@@ -106,7 +157,7 @@ async function createAnthropicClient() {
         messages,
       });
 
-      // Precise extraction, not the generic guesser below — we know this
+      // Precise extraction, not the generic guesser below, we know this
       // shape exactly, and tool_use blocks need to survive the round trip.
       const textBlock = response.content.find((b) => b.type === "text");
       const toolCalls = response.content
@@ -135,7 +186,7 @@ async function createOpenAIClient() {
   return {
     provider: "openai",
     async generateText({ systemPrompt, messages }) {
-      // Tool calling not yet implemented for this provider — see the note
+      // Tool calling not yet implemented for this provider, see the note
       // at the top of this file. Plain text chat only, for now.
       const response = await client.chat.completions.create({
         model: process.env.OPENAI_MODEL || "gpt-4.1",
@@ -165,7 +216,7 @@ async function createGeminiClient() {
   return {
     provider: "gemini",
     async generateText({ systemPrompt, messages }) {
-      // Tool calling not yet implemented for this provider — see the note
+      // Tool calling not yet implemented for this provider, see the note
       // at the top of this file. Plain text chat only, for now.
       const response = await client.models.generateContent({
         model: process.env.GEMINI_MODEL || "gemini-2.5-flash",
@@ -193,7 +244,7 @@ async function createOllamaClient() {
   return {
     provider: "ollama",
     async generateText({ systemPrompt, messages }) {
-      // Tool calling not yet implemented for this provider — see the note
+      // Tool calling not yet implemented for this provider, see the note
       // at the top of this file. Plain text chat only, for now.
       const response = await fetch(`${baseUrl}/api/chat`, {
         method: "POST",
@@ -207,7 +258,7 @@ async function createOllamaClient() {
 
       if (!response.ok) {
         throw new Error(
-          `Ollama request failed with status ${response.status} — is "ollama serve" running, and have you run "ollama pull ${model}"?`,
+          `Ollama request failed with status ${response.status}, is "ollama serve" running, and have you run "ollama pull ${model}"?`,
         );
       }
 
@@ -227,6 +278,8 @@ export async function createModelClient(providerOverride) {
     providerOverride?.trim().toLowerCase() || getConfiguredProvider();
 
   switch (provider) {
+    case "openrouter":
+      return createOpenRouterClient();
     case "anthropic":
       return createAnthropicClient();
     case "openai":

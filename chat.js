@@ -4,7 +4,6 @@ import { stdin as input, stdout as output } from "node:process";
 import { createModelClient } from "./model-provider.js";
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { StreamableHTTPClientTransport } from "@modelcontextprotocol/sdk/client/streamableHttp.js";
-import { maxHeaderSize } from "node:http";
 
 const SYSTEM_PROMPT = `You are Mini Hack Assistant, a patient technical mentor for
 Team1 Kenya's Cohort 3 builders. Explain concepts in plain English before
@@ -91,7 +90,7 @@ async function main() {
   // Or force it in code instead: createModelClient("openai")
   const client = await createModelClient();
   console.log(
-    `Mini Hack CLI Chatbot using ${client.provider} — type 'exit' to quit\n`,
+    `Mini Hack CLI Chatbot using ${client.provider} - type 'exit' to quit\n`,
   );
   console.log(`Using model provider: ${client.provider}\n`);
 
@@ -113,27 +112,31 @@ async function main() {
         console.error(`\nAPI error: ${err.message}\n`);
         break;
       }
-      if (reply.stopReason == "tool_use") {
+      if (reply.toolCalls.length > 0) {
         console.log(`\nAssistant: ${reply.text}\n`);
-        messages.push({ role: "assistant", content: reply.text });
+        messages.push(reply.raw.choices?.[0]?.message ?? { role: "assistant", content: reply.text });
       } else {
         console.log(`\nAssistant: ${reply.text}\n`);
         messages.push({ role: "assistant", content: reply.text });
         break;
       }
-      messages.push({ role: "assistant", content: reply.raw.content });
 
       const results = [];
       for (const call of reply.toolCalls) {
         console.log(` [tool] ${call.name} ${JSON.stringify(call.input)} `);
         const output = await runTool(mcp, mcpToolNames, call.name, call.input);
-        results.push({ type: "tool_result", tool_use_id: call.id, content: output, });
+        results.push({
+          role: "tool",
+          tool_call_id: call.id,
+          content: output,
+        });
       }
-      messages.push({ role: "user", content: results });
+      messages.push(...results);
     }
-    await mcp.close();
-    rl.close();
   }
+
+  await mcp.close();
+  rl.close();
 }
 
 main().catch((err) => {
