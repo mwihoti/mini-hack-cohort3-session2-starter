@@ -1,4 +1,4 @@
-# Commands — Week 1
+# Week 1 commands
 
 ## Local setup
 ```bash
@@ -23,7 +23,7 @@ git push origin week-1-<your-github-handle>
 
 ## Open your PR
 ```bash
-gh pr create --title "[Cohort 3 · Week 1] <Your Name> — CLI Agent" \
+gh pr create --title "[Cohort 3 · Week 1] <Your Name>, CLI Agent" \
   --body-file docs/PULL_REQUEST_TEMPLATE.md
 ```
 Or open the PR from GitHub's web UI against your fork's `main` branch.
@@ -32,6 +32,6 @@ Post the PR link in the WhatsApp community before Sunday midnight EAT.
 ## After your PR is open
 
 Screenshot your working test and your PR, post both on X tagging
-`@code_mwangi` and `@AvaxAfrica`, then copy your post link — the quest page
+`@code_mwangi` and `@AvaxAfrica`, then copy your post link, the quest page
 (coming soon) is where that link goes. Full steps and a post template are in
 `CONTRIBUTING.md`.

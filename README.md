@@ -1,15 +1,15 @@
-# Mini Hack — Cohort 3, Session 2 Starter
+# Mini Hack - Cohort 3, Session 2 Starter
 
 **Building Agentic Solutions on Avalanche** · Team1 Kenya
 
 This is where Session 2 starts from. Session 1 left every builder with a
-CLI chatbot that holds a real conversation — it remembers everything said
+CLI chatbot that holds a real conversation. It remembers everything said
 so far, turn after turn, for as long as the program keeps running.
 `chat.js` in this repo is exactly that: your Session 1 output, ready to
 build on.
 
-Session 2 starts here and adds tools — a web search tool, then the
-Avalanche MCP server — turning this from something that only answers
+Session 2 starts here and adds tools, first a web search tool, then the
+Avalanche MCP server. That turns this from something that only answers
 into something that can act. That's the two-tool agent and the MCP
 integration you're live-coding tonight, on top of this exact file.
 
@@ -22,13 +22,13 @@ Run `chat.js` and you get a terminal program that:
 
 - Asks you for a message, sends it to an LLM, and prints the reply
 - Remembers every message you and the model have exchanged, and resends
-  that whole history on every single call — this is *how* an LLM appears
+  that whole history on every single call. This is *how* an LLM appears
   to have memory, even though the model itself is stateless between calls
 - Uses a system prompt to give the model a consistent persona and rules,
   set once at the top of the file, applied to every turn
 - Keeps looping until you type `exit`, then shuts down cleanly
 
-Under sixty lines of code, and every line of it matters — there's no
+Under sixty lines of code, and every line of it matters. There's no
 hidden framework doing the "agent" part for you. This is the whole
 pattern: one client, one system prompt, one array holding history, one
 loop. Tonight you extend that same loop so it can call tools.
@@ -36,26 +36,26 @@ loop. Tonight you extend that same loop so it can call tools.
 ## How the conversation memory actually works
 
 This trips people up the first time, so it's worth spelling out. The
-model has no memory of its own — every API call is completely
+model has no memory of its own, every API call is completely
 independent. What makes this feel like a continuous conversation is:
 
 1. Every message you type gets pushed into a `messages` array
 2. Every reply from the model gets pushed into that same array too
-3. On your *next* message, the entire array — the full history — gets
+3. On your *next* message, the entire array (the full history) gets
    sent again, not just your newest line
 4. The model reads the whole thing fresh each time and replies as if it
    remembers, because from its point of view, it's reading a transcript
    that includes everything
 
-That's the entire trick. No database, no session store — just an array
+That's the entire trick. No database, no session store, just an array
 in memory that grows for as long as the program runs, and gets sent back
 in full every time. Tonight's tool calls slot into this same array, as
-extra turns in that history — the mechanism doesn't change, it just
+extra turns in that history. The mechanism doesn't change, it just
 carries more kinds of content.
 
 ## Model provider
 
-`chat.js` doesn't hardcode which LLM it talks to — `model-provider.js`
+`chat.js` doesn't hardcode which LLM it talks to. `model-provider.js`
 picks the provider at runtime from `MODEL_PROVIDER` in your `.env` file,
 defaulting to `anthropic` if you leave that out entirely. Switching
 providers is a one-line edit to `.env`, not a code change:
@@ -71,13 +71,13 @@ MODEL_PROVIDER=anthropic   # or openai, gemini, ollama
 | Google Gemini | `npm install @google/genai` + `GEMINI_API_KEY` | Google's servers |
 | Ollama (local) | Install Ollama, `ollama pull llama3.1` | Your own machine, no API key |
 
-Fill in the key(s) for whichever provider(s) you want in `.env` — see
+Fill in the key(s) for whichever provider(s) you want in `.env`. See
 `.env.example` for the exact variable names. You can also override the
 provider for a single run without touching `.env`:
 `MODEL_PROVIDER=openai npm start`, or force it in code with
 `createModelClient("openai")`.
 
-**Tool calling is only implemented for one provider right now** — the
+**Tool calling is only implemented for one provider right now.** The
 other three accept a `tools` argument but ignore it and never return tool
 calls. See the comments at the top of `model-provider.js` for which
 provider that is and why; if your agent needs tools, build it on that one
@@ -95,48 +95,47 @@ npm start
 You should see:
 
 ```
-Mini Hack CLI Chatbot — type 'exit' to quit
+Mini Hack CLI Chatbot using anthropic - type 'exit' to quit
 
 You: 
 ```
 
 Type a message and press enter. To end the session, type `exit`.
 
-## Prefer Rust? Same starter, same lesson
+## Prefer Rust?
 
-`rust/chat.rs` is the same Session 1 chatbot as `chat.js`, written in plain
-Rust with no SDK — it calls the Anthropic Messages API directly over HTTPS,
-so you can see that an "AI client" is just JSON over HTTP. Same system
-prompt, same grow-forever `messages` history, same loop, same `.env` (it
-reads the one at the repo root), and it honors the same `ANTHROPIC_MODEL`
-and `MAX_TOKENS` variables.
+`rust/chat.rs` is the same Session 1 chatbot as `chat.js`, written in
+plain Rust with no SDK. It calls the Anthropic Messages API directly over
+HTTPS, so you can see that an "AI client" is just JSON over HTTP. Same
+system prompt, same growing `messages` history, same loop, same `.env`
+(it reads the one at the repo root), and it honors the same
+`ANTHROPIC_MODEL` and `MAX_TOKENS` variables.
 
 ```bash
-# needs a Rust toolchain — https://rustup.rs
+# needs a Rust toolchain: https://rustup.rs
 cd rust
 cargo run
 ```
 
-It talks to Anthropic only — the `MODEL_PROVIDER` switch is a JS-side
-feature of `model-provider.js`. Tonight's tools slot into it the same way
-as in JS: check `stop_reason`, run the tool, push the result back into the
-history, call the API again. Full setup, the chat.js-to-chat.rs mapping,
-and Rust-specific troubleshooting live in
-[`rust/README.md`](rust/README.md).
+It talks to Anthropic only. The `MODEL_PROVIDER` switch is a JS-side
+feature of `model-provider.js`. The week 1 tools plug in the same way as
+in JS: check `stop_reason`, run the tool, push the result back into the
+history, call the API again. Setup, a chat.js to chat.rs mapping, and
+Rust troubleshooting are in [`rust/README.md`](rust/README.md).
 
 ## Files
 
 | File | Purpose |
 |---|---|
-| `chat.js` | Your Session 1 chatbot — client setup, system prompt, conversation loop. This is what you extend tonight |
-| `rust/chat.rs` | The same chatbot in plain Rust, no SDK — for builders who'd rather start in Rust. See "Prefer Rust?" above |
-| `rust/Cargo.toml` | Rust manifest — `cargo run` inside `rust/` builds and runs `chat.rs` |
-| `rust/README.md` | Setup, the chat.js↔chat.rs mapping, and troubleshooting for the Rust starter |
-| `model-provider.js` | The provider factory — picks anthropic/openai/gemini/ollama based on `MODEL_PROVIDER` in `.env` |
-| `.env.example` | Template for your API key(s) — copy to `.env`, never commit `.env` |
+| `chat.js` | Your Session 1 chatbot: client setup, system prompt, conversation loop. This is what you extend tonight |
+| `rust/chat.rs` | The same chatbot in plain Rust, no SDK, for builders who'd rather start in Rust. See "Prefer Rust?" above |
+| `rust/Cargo.toml` | Rust manifest so `cargo run` inside `rust/` builds and runs `chat.rs` |
+| `rust/README.md` | Setup, the chat.js to chat.rs mapping, and troubleshooting for the Rust starter |
+| `model-provider.js` | The provider factory: picks anthropic/openai/gemini/ollama based on `MODEL_PROVIDER` in `.env` |
+| `.env.example` | Template for your API key(s). Copy to `.env`, never commit `.env` |
 | `package.json` | Dependencies for all four providers' SDKs plus `dotenv`; Ollama needs no extra package |
 | `COMMANDS.md` | Every command you need, copy-paste ready, from clone to PR |
-| `CONTRIBUTING.md` | The full submission flow — branching, testing, screenshots, the X post, and the PR |
+| `CONTRIBUTING.md` | The full submission flow: branching, testing, screenshots, the X post, and the PR |
 | `docs/PULL_REQUEST_TEMPLATE.md` | What your PR description needs to cover |
 
 ## Tonight: your Week 1 deliverable
@@ -153,9 +152,9 @@ there.
 | Problem | Likely cause |
 |---|---|
 | `401` / invalid API key | `.env` isn't loading, or the key has extra quotes/spaces around it |
-| `429` / rate limited | Sending requests too fast — wait a moment, or add retry logic |
-| Reply looks cut off | You've hit the token limit — raise `MAX_TOKENS` or shorten your prompt |
-| "Cannot find module" | Run `npm install` again — did you switch providers without installing their SDK? |
+| `429` / rate limited | Sending requests too fast. Wait a moment, or add retry logic |
+| Reply looks cut off | You've hit the token limit. Raise `MAX_TOKENS` or shorten your prompt |
+| "Cannot find module" | Run `npm install` again. Did you switch providers without installing their SDK? |
 | Tool loop never ends | Check you're testing `stop_reason` correctly and pushing `tool_result` back into `messages` |
 
 ## Cost awareness
@@ -163,4 +162,4 @@ there.
 Every message you send and receive costs tokens, and tool calls add extra
 round trips on top of that. Check your usage at
 console.anthropic.com/settings/usage before and after a session so you know
-what a typical session costs, and set a spend limit under Settings → Limits.
+what a typical session costs, and set a spend limit under Settings > Limits.

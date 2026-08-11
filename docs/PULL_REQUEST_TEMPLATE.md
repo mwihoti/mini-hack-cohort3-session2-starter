@@ -4,7 +4,7 @@
 
 ## Model provider used
 
-<!-- Claude (default), OpenAI, Gemini, Ollama, or other — say which -->
+<!-- Claude (default), OpenAI, Gemini, Ollama, or other, say which -->
 
 ## Tools my agent uses
 
